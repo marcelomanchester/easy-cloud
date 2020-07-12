@@ -1,26 +1,47 @@
 const express = require('express');
-const port = process.env.PORT;
-// const userRouter = require('./routers/user')
 
-const app = express();
+const db = require('./src/db');
+const routers = require('./src/routers');
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header(
-        'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-    );
-    res.header(
-        'Access-Control-Allow-Methods',
-        'PUT, POST, GET, DELETE, OPTIONS'
-    );
+const initApp = async () => {
+    await initDatabase();
 
-    next();
-});
+    initServer();
+};
 
-app.use(express.json());
-// app.use(userRouter)
+const initDatabase = async () => {
+    try {
+        await db.authenticate();
+        console.log('Connection has been established successfully.');
+    } catch (error) {
+        console.error('Unable to connect to the database:', error);
+    }
+};
 
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+const initServer = () => {
+    const app = express();
+
+    app.use((req, res, next) => {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header(
+            'Access-Control-Allow-Headers',
+            'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+        );
+        res.header(
+            'Access-Control-Allow-Methods',
+            'PUT, POST, GET, DELETE, OPTIONS'
+        );
+
+        next();
+    });
+
+    app.use(express.json());
+
+    routers(app);
+
+    app.listen(process.env.PORT, () => {
+        console.log(`Server running on port ${process.env.PORT}`);
+    });
+};
+
+initApp();
